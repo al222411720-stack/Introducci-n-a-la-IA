@@ -1,27 +1,26 @@
+import tkinter as tk
+from tkinter import messagebox
 from pyspark.sql import SparkSession
 
-spark = SparkSession.builder \
-    .appName("SistemaExpertoSaludBIGDTA") \
-    .getOrCreate()
+root = tk.Tk()
+root.withdraw()
 
-print("\n==========================================")
-print("     SISTEMA EXPERTO DE DIAGNÓSTICO")
-print("==========================================")
+fiebre = messagebox.askyesno("Sistema Experto", "¿Tiene fiebre?")
+tos = messagebox.askyesno("Sistema Experto", "¿Tiene tos?")
+dolor = messagebox.askyesno("Sistema Experto", "¿Tiene dolor de garganta?")
 
-fiebre = input("¿Tiene fiebre? (s/n): ").lower()
-tos = input("¿Tiene tos? (s/n): ").lower()
-dolor = input("¿Tiene dolor de garganta? (s/n): ").lower()
-
-if fiebre == "s" and tos == "s":
+if fiebre and tos:
     diagnostico = "Posible infección respiratoria"
-elif tos == "s" and dolor == "s":
+elif tos and dolor:
     diagnostico = "Posible irritación respiratoria"
-elif fiebre == "s":
+elif fiebre:
     diagnostico = "Se recomienda valoración profesional"
 else:
     diagnostico = "No se identificó un patrón"
 
-datos = [(fiebre, tos, dolor, diagnostico)]
+spark = SparkSession.builder.appName("SistemaExpertoGUI").getOrCreate()
+
+datos = [("Sí" if fiebre else "No", "Sí" if tos else "No", "Sí" if dolor else "No", diagnostico)]
 columnas = ["Fiebre", "Tos", "Dolor_Garganta", "Diagnostico_Final"]
 
 df_salud = spark.createDataFrame(datos, schema=columnas)
@@ -30,5 +29,7 @@ print("\n==========================================")
 print("     RESULTADO EN APACHE SPARK")
 print("==========================================")
 df_salud.show(truncate=False)
+
+messagebox.showinfo("Resultado del Sistema Experto", f"Diagnóstico final:\n{diagnostico}")
 
 spark.stop()
